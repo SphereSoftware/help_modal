@@ -1,8 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
 
-const baseEntries = ['react-hot-loader/patch', 'babel-polyfill'];
-
 module.exports = {
   entry: {
     app: ['react-hot-loader/patch', 'babel-polyfill', 'src/entry']
@@ -27,7 +25,17 @@ module.exports = {
         test: /\.jsx?$/,
         include: path.resolve(__dirname, '../src'),
         loader: 'babel-loader'
-      }
+      },
+      {
+        test: /\.css$/,
+        exclude: path.resolve(__dirname, '../src'),
+        use: [
+          'style-loader',
+          { loader: 'css-loader', options: { importLoaders: 1 } },
+          'postcss-loader',
+          { loader: 'sass-loader', options: { outputStyle: 'compressed' } }
+        ]
+      },
     ]
   }
 };

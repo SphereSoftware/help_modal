@@ -2,7 +2,6 @@ const path = require('path');
 const merge = require('webpack-merge');
 const config = require('./webpack.config.base');
 const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const GLOBALS = {
   'process.env': {
