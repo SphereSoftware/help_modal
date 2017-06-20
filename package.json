@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "author": "Sphere Software",
   "repository": "git@github.com:SphereSoftware/help_modal.git",
+  "main": "build/help-modal.js",
   "scripts": {
     "clean:build": "rimraf build",
     "prestart": "npm run clean:build && yarn check",

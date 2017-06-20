@@ -12,7 +12,7 @@ const GLOBALS = {
 
 module.exports = merge(config, {
   output: {
-    filename: '[name].[chunkhash].js',
+    filename: 'help-modal.js',
     path: path.resolve(__dirname, '../build'),
     publicPath: '/'
   },
