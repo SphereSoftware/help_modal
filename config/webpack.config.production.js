@@ -3,16 +3,8 @@ const merge = require('webpack-merge');
 const config = require('./webpack.config.base');
 const webpack = require('webpack');
 
-const GLOBALS = {
-  'process.env': {
-    'NODE_ENV': JSON.stringify('production')
-  },
-  __DEV__: JSON.stringify(JSON.parse(process.env.DEBUG || 'false'))
-};
-
 module.exports = merge(config, {
   output: {
-    filename: '[name].[chunkhash].js',
     path: path.resolve(__dirname, '../build'),
     publicPath: '/'
   },
@@ -21,7 +13,6 @@ module.exports = merge(config, {
     new webpack.HashedModuleIdsPlugin(),
     // Avoid publishing files when compilation fails
     new webpack.NoEmitOnErrorsPlugin(),
-    new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.UglifyJsPlugin({
       compress: {
         screw_ie8: true,

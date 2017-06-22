@@ -1,12 +1,29 @@
 const path = require('path');
 const webpack = require('webpack');
 
+const TARGET = process.env.TARGET || 'app';
+const GLOBALS = {
+  'process.env': {
+    'NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+    'BASE_URL': JSON.stringify(process.env.BASE_URL || '/help_requests'),
+    'TARGET': JSON.stringify(TARGET)
+  },
+  __DEV__: JSON.stringify(JSON.parse(process.env.DEBUG || 'false')),
+};
+
+let entries = ['react-hot-loader/patch', 'src/entry'];
+
+//adding 'babel-polyfill' for not react apps
+if (TARGET !== 'app') {
+  entries.concat('babel-polyfill');
+}
+
 module.exports = {
   entry: {
-    app: ['react-hot-loader/patch', 'babel-polyfill', 'src/entry']
+    app: entries
   },
   output: {
-    filename: '[name].js',
+    filename: 'help-modal.js',
     path: path.resolve(__dirname, '../build'),
     publicPath: '/',
   },
@@ -19,6 +36,9 @@ module.exports = {
     },
     extensions: ['.js', '.jsx', '.json', '.css']
   },
+  plugins: [
+    new webpack.DefinePlugin(GLOBALS),
+  ],
   module: {
     rules: [
       {

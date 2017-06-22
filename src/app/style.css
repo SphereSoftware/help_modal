@@ -5,6 +5,7 @@
   box-sizing: border-box;
   font-size: 14px;
   font-family: 'Open Sans', sans-serif;
+  z-index: 100;
 
   *, *:after, *:before {
     box-sizing: inherit;
@@ -64,15 +65,14 @@
   color: #7f7d95;
 }
 
-.textArea {
+.input {
   font-family: 'Open Sans', sans-serif;
   font-size: 14px;
   border-radius: 5px;
   border: 1px solid #c6c6c6;
   width: 100%;
-  resize: vertical;
-  padding: 10px;
   color: #666;
+  padding: 10px;
   margin-bottom: 20px;
 
   &:focus {
@@ -81,9 +81,19 @@
   }
 }
 
-.textArea::placeholder,
+.textArea {
+  resize: vertical;
+}
+
+.inputField {
+  height: 28px;
+  line-height: 28px;
+}
+
+.input::placeholder,
 :global(.rc-select-selection__placeholder) {
   color: #c6c6c6;
+  opacity: 1;
 }
 
 .dropzone {
@@ -96,6 +106,7 @@
   color: #7f7d95;
   margin-top: 10px;
   margin-bottom: 30px;
+  cursor: pointer;
 }
 
 .icon {
