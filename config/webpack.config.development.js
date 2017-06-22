@@ -5,20 +5,12 @@ const path = require('path');
 const DashboardPlugin = require('webpack-dashboard/plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const GLOBALS = {
-  'process.env': {
-    'NODE_ENV': JSON.stringify('development')
-  },
-  __DEV__: JSON.stringify(JSON.parse(process.env.DEBUG || 'true'))
-};
-
 module.exports = merge(config, {
   cache: true,
   devtool: 'eval-source-map',
   plugins: [
     new webpack.NamedModulesPlugin(),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.DefinePlugin(GLOBALS),
     new DashboardPlugin(),
     new HtmlWebpackPlugin({
       template: path.join(__dirname, '../src/index.template.ejs'),

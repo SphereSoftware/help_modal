@@ -3,6 +3,7 @@ import LaunchBtn from './components/launchBtn/LaunchBtn';
 import Select, { Option } from 'rc-select';
 import 'rc-select/assets/index.css';
 import Dropzone from 'react-dropzone';
+import axios from 'utils/axios';
 import css from './style.css';
 
 const UploadIcon = () => (
@@ -26,17 +27,30 @@ const RemoveIcon = props => (
 
 const CATEGORIES = ['Question', "It doesn't work", 'Subscription and billing', 'Other'];
 
+const NEED_EMAIL = process.env.TARGET !== 'app';
+
 export default class App extends PureComponent {
 
   state = {
-    open: true,
+    open: false,
+    email: '',
     category: undefined,
     message: '',
-    files: []
+    files: [],
+    needEmailInput: false
   };
 
+  get email() {
+    return localStorage.getItem('email') || '';
+  }
+
   toggle = () => {
-    this.setState({ open: !this.state.open });
+    const needEmailInput = NEED_EMAIL || !this.email.length;
+    this.setState({ open: !this.state.open, needEmailInput, email: this.email });
+  };
+
+  onEmailChange = (e) => {
+    this.setState({ email: e.target.value });
   };
 
   onCategoryChange = (value) => {
@@ -66,24 +80,35 @@ export default class App extends PureComponent {
   }
 
   send = () => {
-    const { category, message, files } = this.state;
+    const { email, category, message, files } = this.state;
     const data = new FormData();
 
-    data.append('category', category);
+    data.append('email', email);
+    data.append('category', CATEGORIES[category]);
     data.append('message', message);
     files.forEach(file => data.append('files[]', file, file.name));
+
+    axios.post('', data);
 
     console.log(data);
   };
 
   renderBox() {
-    const { category, message } = this.state;
+    const { category, message, email, needEmailInput } = this.state;
 
     return (
       <div>
         <div className={ css.box }>
           <div className={ css.header }>Need our help?</div>
           <div className={ css.info }>Please, select category that looks appropriate for your type of question and describe what you want to ask. Our manager will contact you within 24 hours ready to talk and help</div>
+          { needEmailInput &&
+            <input
+              className={ `${css.input} ${css.inputField}` }
+              value={ email }
+              onChange={ this.onEmailChange }
+              placeholder="Type your Email"
+            />
+          }
           <Select
             value={ category }
             placeholder="Question category"
@@ -96,7 +121,7 @@ export default class App extends PureComponent {
           </Select>
 
           <textarea
-            className={ css.textArea }
+            className={ `${css.input} ${css.textArea}` }
             value={ message }
             rows="8"
             onChange={ this.onMessageChange }
