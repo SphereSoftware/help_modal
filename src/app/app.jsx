@@ -25,28 +25,65 @@ const RemoveIcon = props => (
   </svg>
 );
 
+const MailIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={ css.mailIcon } viewBox="0 0 512 512">
+    <path fill="currentColor" d="M501.8 139.942H171.313c-5.633 0-10.2 4.566-10.2 10.2v19.234h-97.21c-5.632 0-10.198 4.566-10.198 10.2 0 5.632 4.566 10.198 10.2 10.198h97.21v132.452H103.01c-5.633 0-10.2 4.566-10.2 10.2s4.567 10.198 10.2 10.198h58.1v19.235c0 5.632 4.567 10.198 10.2 10.198h330.49c5.632 0 10.198-4.566 10.198-10.2V150.142c0-5.632-4.566-10.198-10.2-10.198zm-25.16 20.398L336.57 275.325 197.14 160.34h279.5zm14.962 191.32h-310.09V173.89L330.068 296.4c1.884 1.554 4.186 2.332 6.49 2.332 2.294 0 4.59-.772 6.47-2.316L491.602 174.45v177.21z" />
+    <path fill="currentColor" d="M119.673 244.768H10.2c-5.634 0-10.2 4.566-10.2 10.2 0 5.632 4.566 10.198 10.2 10.198h109.473c5.633 0 10.2-4.566 10.2-10.2 0-5.632-4.567-10.198-10.2-10.198zM69.355 322.227h-5.45c-5.634 0-10.2 4.566-10.2 10.2 0 5.632 4.566 10.198 10.2 10.198h5.45c5.633 0 10.2-4.566 10.2-10.2 0-5.632-4.567-10.198-10.2-10.198z" />
+  </svg>
+);
+
 const CATEGORIES = ['Question', "It doesn't work", 'Subscription and billing', 'Other'];
 
 const NEED_EMAIL = process.env.TARGET !== 'app';
 
-export default class App extends PureComponent {
+const CLOSE_TIME = 5000;
 
-  state = {
+const initialState = {
     open: false,
+    isSent: false,
     email: '',
-    category: undefined,
+    category: 0,
     message: '',
     files: [],
     needEmailInput: false
-  };
+};
+
+export default class App extends PureComponent {
+
+  state = initialState;
+
+  componentDidMount() {
+    window.sphereHelpModal = {
+      isOpened: () => this.state.open,
+      toggle: this.toggle,
+      clearFields: this.clearFields
+    };
+  }
+
+  closeTimeout = null;
 
   get email() {
     return localStorage.getItem('email') || '';
   }
 
+  setCloseTimeout = () => setTimeout(() => {
+    this.toggle();
+    this.closeTimeout = null;
+  }, CLOSE_TIME);
+
+  clearFields = () => {
+    const needEmailInput = NEED_EMAIL || !this.email.length;
+    this.setState({ ...initialState, open: this.state.open, needEmailInput });
+  };
+
   toggle = () => {
     const needEmailInput = NEED_EMAIL || !this.email.length;
-    this.setState({ open: !this.state.open, needEmailInput, email: this.email });
+
+    if (this.closeTimeout) {
+      clearTimeout(this.closeTimeout);
+    }
+
+    this.setState({ open: !this.state.open, isSent: false, email: this.email, needEmailInput });
   };
 
   onEmailChange = (e) => {
@@ -71,47 +108,70 @@ export default class App extends PureComponent {
 
   renderFilesList() {
     return this.state.files.map((file, i) => (
-     <div key={ `${file.name}-${file.lastModified}` } className={ css.file }>
-       <FileIcon />
-       { file.name }
-       <RemoveIcon onClick={ () => this.removeFile(i) } />
-     </div>
+      <div key={ `${file.name}-${i}` } className={ css.file }>
+        <FileIcon />
+        <div className={ css.fileName }>
+          { file.name }
+        </div>
+        <RemoveIcon onClick={ () => this.removeFile(i) } />
+      </div>
     ));
   }
 
-  send = () => {
+  send = (e) => {
     const { email, category, message, files } = this.state;
     const data = new FormData();
+
+    e.preventDefault();
 
     data.append('email', email);
     data.append('category', CATEGORIES[category]);
     data.append('message', message);
     files.forEach(file => data.append('files[]', file, file.name));
 
-    axios.post('', data);
-
-    console.log(data);
+    axios.post('', data)
+      .then(() => {
+        this.clearFields();
+        this.setState({ isSent: true });
+      });
   };
 
   renderBox() {
-    const { category, message, email, needEmailInput } = this.state;
+    const { isSent, category, message, email, needEmailInput } = this.state;
+
+    if (isSent) {
+      this.closeTimeout = this.setCloseTimeout();
+      return (
+        <div>
+          <div className={ `${css.box} ${css.sentMessage}` }>
+            <MailIcon />
+            <p className={ css.thankYouText }>
+              Thank you for your feedback! We appreciate it very much.<br />
+              Our manager will contact you within 24 hours.
+            </p>
+          </div>
+          <div className={ css.triangle } />
+        </div>
+      );
+    }
 
     return (
-      <div>
+      <form onSubmit={ this.send }>
         <div className={ css.box }>
           <div className={ css.header }>Need our help?</div>
           <div className={ css.info }>Please, select category that looks appropriate for your type of question and describe what you want to ask. Our manager will contact you within 24 hours ready to talk and help</div>
           { needEmailInput &&
             <input
+              type="email"
               className={ `${css.input} ${css.inputField}` }
               value={ email }
               onChange={ this.onEmailChange }
               placeholder="Type your Email"
+              required
             />
           }
           <Select
             value={ category }
-            placeholder="Question category"
             className={ css.select }
             style={ { width: '100%' } }
             optionLabelProp="children"
@@ -126,6 +186,8 @@ export default class App extends PureComponent {
             rows="8"
             onChange={ this.onMessageChange }
             placeholder="Type your message"
+            maxLength="1000"
+            required
           />
 
           { this.renderFilesList() }
@@ -135,10 +197,10 @@ export default class App extends PureComponent {
             Add file
           </Dropzone>
 
-          <div className={ css.btn } onClick={ this.send }>Send message</div>
+          <button type="submit" className={ css.btn }>Send message</button>
         </div>
         <div className={ css.triangle } />
-      </div>
+      </form>
     );
   }
 
