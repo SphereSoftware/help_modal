@@ -39,6 +39,8 @@ const NEED_EMAIL = process.env.TARGET !== 'app';
 
 const CLOSE_TIME = 5000;
 
+const EMAIL_REGEX = /^\w+([\.-]?\w+)*@\w{2,0}([\.-]?\w+)*(\.\w{2,5})+$/;
+
 const initialState = {
     open: false,
     isSent: false,
@@ -47,7 +49,9 @@ const initialState = {
     category: 0,
     message: '',
     files: [],
-    needEmailInput: false
+    needEmailInput: false,
+    emailError: false,
+    messageError: false
 };
 
 export default class App extends PureComponent {
@@ -116,8 +120,16 @@ export default class App extends PureComponent {
 
   send = () => {
     const { email, category, message, files } = this.state;
-    const data = new FormData();
 
+    if (message.trim().length <= 1) {
+      return this.setState({ messageError: true });
+    }
+
+    if (!email.match(EMAIL_REGEX)) {
+      return this.setState({ emailError: true });
+    }
+
+    const data = new FormData();
     data.append('email', email);
     data.append('category', CATEGORIES[category]);
     data.append('message', message);
@@ -126,10 +138,19 @@ export default class App extends PureComponent {
     axios.post('', data)
       .then(() => {
         this.clearFields();
-        this.setState({ loading: false, isSent: true });
+        this.setState({
+          loading: false,
+          isSent: true,
+          emailError: false,
+          messageError: false
+        });
       })
       .catch(() => {
-        this.setState({ loading: false });
+        this.setState({
+          loading: false,
+          emailError: false,
+          messageError: false
+        });
       });
   };
 
@@ -179,6 +200,7 @@ export default class App extends PureComponent {
               required
             />
           }
+          { emailError && <div className="errorText">Wrong email format</div> }
           <Select
             value={ category }
             className={ css.select }
@@ -198,6 +220,7 @@ export default class App extends PureComponent {
             maxLength="1000"
             required
           />
+          { messageError && <div className="errorText">Message is too short</div> }
 
           { this.renderFilesList() }
 

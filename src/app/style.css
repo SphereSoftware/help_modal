@@ -207,3 +207,7 @@
     transform: rotate(45deg);
   }
 }
+
+.errorText {
+  color: #de3226;
+}
