@@ -3,6 +3,7 @@ import LaunchBtn from './components/launchBtn/LaunchBtn';
 import Select, { Option } from 'rc-select';
 import 'rc-select/assets/index.css';
 import Dropzone from 'react-dropzone';
+import Loadable from 'react-loading-overlay';
 import axios from 'utils/axios';
 import css from './style.css';
 
@@ -41,6 +42,7 @@ const CLOSE_TIME = 5000;
 const initialState = {
     open: false,
     isSent: false,
+    loading: false,
     email: '',
     category: 0,
     message: '',
@@ -106,6 +108,31 @@ export default class App extends PureComponent {
     this.setState({ files: this.state.files.filter((_, index) => index !== i) });
   }
 
+  preSend = (e) => {
+    e.preventDefault();
+
+    this.setState({ loading: true }, this.send);
+  };
+
+  send = () => {
+    const { email, category, message, files } = this.state;
+    const data = new FormData();
+
+    data.append('email', email);
+    data.append('category', CATEGORIES[category]);
+    data.append('message', message);
+    files.forEach(file => data.append('files[]', file, file.name));
+
+    axios.post('', data)
+      .then(() => {
+        this.clearFields();
+        this.setState({ loading: false, isSent: true });
+      })
+      .catch(() => {
+        this.setState({ loading: false });
+      });
+  };
+
   renderFilesList() {
     return this.state.files.map((file, i) => (
       <div key={ `${file.name}-${i}` } className={ css.file }>
@@ -117,24 +144,6 @@ export default class App extends PureComponent {
       </div>
     ));
   }
-
-  send = (e) => {
-    const { email, category, message, files } = this.state;
-    const data = new FormData();
-
-    e.preventDefault();
-
-    data.append('email', email);
-    data.append('category', CATEGORIES[category]);
-    data.append('message', message);
-    files.forEach(file => data.append('files[]', file, file.name));
-
-    axios.post('', data)
-      .then(() => {
-        this.clearFields();
-        this.setState({ isSent: true });
-      });
-  };
 
   renderBox() {
     const { isSent, category, message, email, needEmailInput } = this.state;
@@ -156,8 +165,8 @@ export default class App extends PureComponent {
     }
 
     return (
-      <form onSubmit={ this.send }>
-        <div className={ css.box }>
+      <form onSubmit={ this.preSend }>
+        <Loadable active={ this.state.loading } className={ css.box } spinner>
           <div className={ css.header }>Need our help?</div>
           <div className={ css.info }>Please, select category that looks appropriate for your type of question and describe what you want to ask. Our manager will contact you within 24 hours ready to talk and help</div>
           { needEmailInput &&
@@ -198,7 +207,7 @@ export default class App extends PureComponent {
           </Dropzone>
 
           <button type="submit" className={ css.btn }>Send message</button>
-        </div>
+        </Loadable>
         <div className={ css.triangle } />
       </form>
     );
