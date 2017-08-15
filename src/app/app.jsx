@@ -39,7 +39,7 @@ const NEED_EMAIL = process.env.TARGET !== 'app';
 
 const CLOSE_TIME = 5000;
 
-const EMAIL_REGEX = /^\w+([\.-]?\w+)*@\w{2,0}([\.-]?\w+)*(\.\w{2,5})+$/;
+const EMAIL_REGEX = /^\w+([\.-]?\w+)*@\w{2,}([\.-]?\w+)*(\.\w{2,5})+$/;
 
 const initialState = {
     open: false,
@@ -167,7 +167,7 @@ export default class App extends PureComponent {
   }
 
   renderBox() {
-    const { isSent, category, message, email, needEmailInput } = this.state;
+    const { isSent, category, message, email, needEmailInput, emailError, messageError } = this.state;
 
     if (isSent) {
       this.closeTimeout = this.setCloseTimeout();
