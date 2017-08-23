@@ -39,7 +39,7 @@ const NEED_EMAIL = process.env.TARGET !== 'app';
 
 const CLOSE_TIME = 5000;
 
-const EMAIL_REGEX = /^\w+([\.-]?\w+)*@\w{2,}([\.-]?\w+)*(\.\w{2,5})+$/;
+const EMAIL_REGEX = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,5})+$/;
 
 const initialState = {
     open: false,
@@ -114,22 +114,26 @@ export default class App extends PureComponent {
 
   preSend = (e) => {
     e.preventDefault();
+    const { email, message } = this.state;
+    const emailInvalid = !email.match(EMAIL_REGEX);
+    const messageInvalid = message.trim().length <= 1;
+
+    this.setState({
+      emailError: emailInvalid,
+      messageError: messageInvalid
+    });
+
+    if (emailInvalid || messageInvalid) {
+      return;
+    }
 
     this.setState({ loading: true }, this.send);
   };
 
   send = () => {
     const { email, category, message, files } = this.state;
-
-    if (message.trim().length <= 1) {
-      return this.setState({ messageError: true });
-    }
-
-    if (!email.match(EMAIL_REGEX)) {
-      return this.setState({ emailError: true });
-    }
-
     const data = new FormData();
+
     data.append('email', email);
     data.append('category', CATEGORIES[category]);
     data.append('message', message);
@@ -191,16 +195,18 @@ export default class App extends PureComponent {
           <div className={ css.header }>Need our help?</div>
           <div className={ css.info }>Please, select category that looks appropriate for your type of question and describe what you want to ask. Our manager will contact you within 24 hours ready to talk and help</div>
           { needEmailInput &&
-            <input
-              type="email"
-              className={ `${css.input} ${css.inputField}` }
-              value={ email }
-              onChange={ this.onEmailChange }
-              placeholder="Type your Email"
-              required
-            />
+            <div>
+              { emailError && <div className={ css.errorText }>Wrong email format</div> }
+              <input
+                type="email"
+                className={ `${css.input} ${css.inputField}` }
+                value={ email }
+                onChange={ this.onEmailChange }
+                placeholder="Type your Email"
+                required
+              />
+            </div>
           }
-          { emailError && <div className="errorText">Wrong email format</div> }
           <Select
             value={ category }
             className={ css.select }
@@ -211,6 +217,7 @@ export default class App extends PureComponent {
             { CATEGORIES.map((cat, i) => <Option key={ i } value={ i }>{ cat }</Option>) }
           </Select>
 
+          { messageError && <div className={ css.errorText }>Message is too short</div> }
           <textarea
             className={ `${css.input} ${css.textArea}` }
             value={ message }
@@ -220,7 +227,6 @@ export default class App extends PureComponent {
             maxLength="1000"
             required
           />
-          { messageError && <div className="errorText">Message is too short</div> }
 
           { this.renderFilesList() }
 
